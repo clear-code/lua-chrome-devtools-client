@@ -19,7 +19,7 @@ function http_connect_to_chrome(url)
   local response,response_code,response_header =
     http.request{
       url = url,
-      sink = ltn12.sink.table(resp),
+      sink = ltn12.sink.table(http_response),
     }
   return http_response
 end
@@ -27,7 +27,7 @@ end
 function get_ws_url(http_response)
   local ws_url =
     json.decode(http_response[1])[1]["webSocketDebuggerUrl"]
-  if string.match(ws_ulr, "localhost:9222") == nil then
+  if string.match(ws_url, "localhost:9222") == nil then
     ws_url = string.gsub(ws_url, "localhost", "localhost:9222")
   end
   return ws_url
@@ -46,58 +46,34 @@ end
 
 function ws_close(ws)
   assert(ws:close())
+  os.execute("sleep 5")
 end
 
-local http_response =
-  http_connect_to_chrome("http://localhost:9222/json")
-local ws_url = get_ws_url(http_response)
-local ws = ws_connect_to_chrome(ws_ulr)
-send_command_to_chrome("{\"id\":1,\"method\":\"Page.enable\"}")
+function connect_to_chrome()
+  local http_response =
+    http_connect_to_chrome("http://localhost:9222/json")
+  local ws_url = get_ws_url(http_response)
+  local ws = ws_connect_to_chrome(ws_url)
+  return ws
+end
 
-assert(ws:send("{\"id\":2,\"method\":\"Page.navigate\",\"params\":{\"url\":\"file:///home/horimoto/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89/before.html\"}}"))
-data = assert(ws:receive())
+local connection = connect_to_chrome()
+send_command_to_chrome(connection, "{\"id\":1,\"method\":\"Page.enable\"}")
+
+local data = send_command_to_chrome(connection, "{\"id\":2,\"method\":\"Page.navigate\",\"params\":{\"url\":\"file:///home/horimoto/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89/before.html\"}}")
 print(data)
-ws_close(ws)
+ws_close(connection)
 
-os.execute("sleep 10")
-ws = ws_connect_to_chrome(ws_ulr)
+connection = connect_to_chrome()
 
-assert(ws:send("{\"id\":4,\"method\":\"Runtime.evaluate\", \"params\":{\"expression\":\"new XMLSerializer().serializeToString(document)\"}}"))
-local data = assert(ws:receive())
+data = send_command_to_chrome(connection, "{\"id\":4,\"method\":\"Runtime.evaluate\", \"params\":{\"expression\":\"new XMLSerializer().serializeToString(document)\"}}")
 
 print("json decode")
 print(data)
 data = json.decode(data)
 print(type(data))
---print(data.result)
 for k,v in pairs(data.result.result) do
   print(k,v)
 end
---codepoint_to_utf8(data)
---for w in string.gmatch(data, "\\u%w%w%w%w") do
---  print(utf8.char(string.gsub(w, "\\u", "0x")))
---end
 
---print(json.encode(data))
---print(string.format("%s", data))
---print(data)
-
---print(url.unescape(data))
---assert(ws:send("{\"id\":2,\"method\":\"DOM.enable\"}"))
---local data = assert(ws:receive())
---print(data)
---
---assert(ws:send("{\"id\":4,\"method\":\"DOM.getDocument\"}"))
---local data = assert(ws:receive())
---print(data)
-
---f = io.open("write.txt", "w")
---f:write(data)
---f:close()
-ws_close(ws)
-
---local ws_client = websocket.client.copas({timeout=2})
---local ok, err = ws_client:connect(ws_url)
---if not ok then
---  print("could not connect", err)
---end
+ws_close(connection)
