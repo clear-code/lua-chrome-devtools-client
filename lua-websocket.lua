@@ -35,6 +35,10 @@ function send_command_to_chrome(ws, command)
   return assert(ws:receive())
 end
 
+function ws_close(ws)
+  assert(ws:close())
+end
+
 local http_response =
   http_connect_to_chrome("http://localhost:9222/json")
 
@@ -47,14 +51,10 @@ send_command_to_chrome("{\"id\":1,\"method\":\"Page.enable\"}")
 assert(ws:send("{\"id\":2,\"method\":\"Page.navigate\",\"params\":{\"url\":\"file:///home/horimoto/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89/before.html\"}}"))
 data = assert(ws:receive())
 print(data)
-assert(ws:close())
+ws_close(ws)
 
 os.execute("sleep 10")
-ws = websocket.new_from_uri(ws_url)
-assert(ws:connect())
---assert(ws:send("{\"id\":3,\"method\":\"Page.loadEventFired\"}"))
---local data = assert(ws:receive())
---print(data)
+ws = ws_connect_to_chrome(ws_ulr)
 
 assert(ws:send("{\"id\":4,\"method\":\"Runtime.evaluate\", \"params\":{\"expression\":\"new XMLSerializer().serializeToString(document)\"}}"))
 local data = assert(ws:receive())
@@ -91,7 +91,7 @@ end
 --f = io.open("write.txt", "w")
 --f:write(data)
 --f:close()
-assert(ws:close())
+ws_close(ws)
 
 --local ws_client = websocket.client.copas({timeout=2})
 --local ok, err = ws_client:connect(ws_url)
