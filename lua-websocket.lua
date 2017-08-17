@@ -1,3 +1,5 @@
+module("chrome_devtools", package.seeall)
+
 local http = require ("socket.http")
 local ltn12 = require("ltn12")
 local json = require("cjson")
@@ -85,12 +87,3 @@ function page_navigate(connection, page_url)
                           "}")
   socket.sleep(1)
 end
-
-local connection = connect_to_chrome()
-page_navigate(connection,
-  "file:///home/horimoto/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89/before.html")
-close_to_chrome(connection)
-
-connection = connect_to_chrome()
-translate_html_to_xml(connection)
-close_to_chrome(connection)
