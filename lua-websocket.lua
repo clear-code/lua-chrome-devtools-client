@@ -24,6 +24,15 @@ function http_connect_to_chrome(url)
   return http_response
 end
 
+function get_ws_url(http_response)
+  local ws_url =
+    json.decode(http_response[1])[1]["webSocketDebuggerUrl"]
+  if string.match(ws_ulr, "localhost:9222") == nil then
+    ws_url = string.gsub(ws_url, "localhost", "localhost:9222")
+  end
+  return ws_url
+end
+
 function ws_connect_to_chrome(ws_url)
   local ws = websocket.new_from_uri(ws_url)
   assert(ws:connect())
@@ -41,10 +50,7 @@ end
 
 local http_response =
   http_connect_to_chrome("http://localhost:9222/json")
-
-local ws_url = json.decode(http_response[1])[1]["webSocketDebuggerUrl"]
-ws_url = string.gsub(ws_url, "localhost", "localhost:9222")
-
+local ws_url = get_ws_url(http_response)
 local ws = ws_connect_to_chrome(ws_ulr)
 send_command_to_chrome("{\"id\":1,\"method\":\"Page.enable\"}")
 
@@ -58,10 +64,7 @@ ws = ws_connect_to_chrome(ws_ulr)
 
 assert(ws:send("{\"id\":4,\"method\":\"Runtime.evaluate\", \"params\":{\"expression\":\"new XMLSerializer().serializeToString(document)\"}}"))
 local data = assert(ws:receive())
--- data = string.gsub(data, '(%%\%%\)', '(%%\)')
--- data = string.gsub(data, '\e\e', '\e')
--- data = string.gsub(data, '\\n', '\n')
--- data = string.gsub(data, '\\u', '0x')
+
 print("json decode")
 print(data)
 data = json.decode(data)
