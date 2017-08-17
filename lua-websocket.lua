@@ -3,16 +3,6 @@ local ltn12 = require("ltn12")
 local json = require("cjson")
 local websocket = require("http.websocket")
 local url = require("socket.url")
-local utf8 = require 'lua-utf8'
-
---[[
-function codepoint_to_utf8(str_codepoint)
-  for codepoint in string.gmatch(str_codepoint, "\\u%w%w%w%w") do
-    hex_codepoint = string.gsub(codepoint, "\\u", "0x")
-    str_codepoint = string.gsub(str_codepoint, codepoint, utf8.char(hex_codepoint))
-  end
-end
---]]
 
 function http_connect_to_chrome(url)
   local http_response = {}
@@ -46,7 +36,6 @@ end
 
 function ws_close(ws)
   assert(ws:close())
-  os.execute("sleep 5")
 end
 
 function connect_to_chrome()
@@ -57,23 +46,51 @@ function connect_to_chrome()
   return ws
 end
 
-local connection = connect_to_chrome()
-send_command_to_chrome(connection, "{\"id\":1,\"method\":\"Page.enable\"}")
-
-local data = send_command_to_chrome(connection, "{\"id\":2,\"method\":\"Page.navigate\",\"params\":{\"url\":\"file:///home/horimoto/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89/before.html\"}}")
-print(data)
-ws_close(connection)
-
-connection = connect_to_chrome()
-
-data = send_command_to_chrome(connection, "{\"id\":4,\"method\":\"Runtime.evaluate\", \"params\":{\"expression\":\"new XMLSerializer().serializeToString(document)\"}}")
-
-print("json decode")
-print(data)
-data = json.decode(data)
-print(type(data))
-for k,v in pairs(data.result.result) do
-  print(k,v)
+function close_to_chrome(connection)
+  ws_close(connection)
 end
 
-ws_close(connection)
+function translate_html_to_xml(connection)
+  local response =
+    send_command_to_chrome(connection,
+                          "{"..
+                            "\"id\":0,"..
+                            "\"method\":\"Runtime.evaluate\","..
+                            "\"params\":"..
+                            "{"..
+                              "\"expression\":"..
+                              "\"new XMLSerializer().serializeToString(document)\""..
+                            "}"..
+                          "}")
+  xml = json.decode(response).result.result.value
+  print(xml)
+  return xml
+end
+
+function page_navigate(connection, page_url)
+  send_command_to_chrome(connection,
+                        "{"..
+                          "\"id\":0,"..
+                          "\"method\":\"Page.enable\""..
+                        "}")
+  data =
+    send_command_to_chrome(connection,
+                          "{"..
+                            "\"id\":0,"..
+                            "\"method\":\"Page.navigate\","..
+                            "\"params\":"..
+                            "{"..
+                              "\"url\":"..page_url..
+                            "}"..
+                          "}")
+  socket.sleep(1)
+end
+
+local connection = connect_to_chrome()
+page_navigate(connection,
+  "file:///home/horimoto/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89/before.html")
+close_to_chrome(connection)
+
+connection = connect_to_chrome()
+translate_html_to_xml(connection)
+close_to_chrome(connection)
