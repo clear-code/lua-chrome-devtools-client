@@ -15,28 +15,32 @@ end
 --]]
 
 function http_connect_to_chrome(url)
-  local resp = {}
+  local http_response = {}
   local response,response_code,response_header =
     http.request{
       url = url,
       sink = ltn12.sink.table(resp),
     }
-  return resp
+  return http_response
 end
 
-http_response = http_connect_to_chrome("http://localhost:9222/json")
+function ws_connect_to_chrome(ws_url)
+  local ws = websocket.new_from_uri(ws_url)
+  assert(ws:connect())
+  return ws
+end
+
+local http_response =
+  http_connect_to_chrome("http://localhost:9222/json")
 
 local ws_url = json.decode(http_response[1])[1]["webSocketDebuggerUrl"]
 ws_url = string.gsub(ws_url, "localhost", "localhost:9222")
-print(resp[1])
-print(ws_url)
 
+local ws = ws_connect_to_chrome(ws_ulr)
 --command = { id = "2", method = "Page.navigate", url = "file:///home/horimoto/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89/before.html" }
 --command = json.encode(command)
 --print(command)
 
-local ws = websocket.new_from_uri(ws_url)
-assert(ws:connect())
 
 assert(ws:send("{\"id\":1,\"method\":\"Page.enable\"}"))
 local data = assert(ws:receive())
