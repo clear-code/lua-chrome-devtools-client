@@ -30,6 +30,11 @@ function ws_connect_to_chrome(ws_url)
   return ws
 end
 
+function send_command_to_chrome(ws, command)
+  assert(ws:send(command))
+  return assert(ws:receive())
+end
+
 local http_response =
   http_connect_to_chrome("http://localhost:9222/json")
 
@@ -37,14 +42,7 @@ local ws_url = json.decode(http_response[1])[1]["webSocketDebuggerUrl"]
 ws_url = string.gsub(ws_url, "localhost", "localhost:9222")
 
 local ws = ws_connect_to_chrome(ws_ulr)
---command = { id = "2", method = "Page.navigate", url = "file:///home/horimoto/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89/before.html" }
---command = json.encode(command)
---print(command)
-
-
-assert(ws:send("{\"id\":1,\"method\":\"Page.enable\"}"))
-local data = assert(ws:receive())
-print(data)
+send_command_to_chrome("{\"id\":1,\"method\":\"Page.enable\"}")
 
 assert(ws:send("{\"id\":2,\"method\":\"Page.navigate\",\"params\":{\"url\":\"file:///home/horimoto/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89/before.html\"}}"))
 data = assert(ws:receive())
