@@ -6,6 +6,8 @@ local json = require("cjson")
 local websocket = require("http.websocket")
 local url = require("socket.url")
 
+local ws_connection = nil
+
 function http_connect_to_chrome(url)
   local http_response = {}
   local response,response_code,response_header =
@@ -16,11 +18,11 @@ function http_connect_to_chrome(url)
   return http_response
 end
 
-function get_ws_url(http_response)
+function get_ws_url(connect_ip, http_response)
   local ws_url =
     json.decode(http_response[1])[1]["webSocketDebuggerUrl"]
-  if string.match(ws_url, "localhost:9222") == nil then
-    ws_url = string.gsub(ws_url, "localhost", "localhost:9222")
+  if string.match(ws_url, connect_ip..":9222") == nil then
+    ws_url = string.gsub(ws_url, connect_ip, connect_ip..":9222")
   end
   return ws_url
 end
@@ -43,18 +45,17 @@ end
 function connect_to_chrome(connect_ip)
   local http_response =
     http_connect_to_chrome("http://"..connect_ip..":9222/json")
-  local ws_url = get_ws_url(http_response)
-  local ws = ws_connect_to_chrome(ws_url)
-  return ws
+  local ws_url = get_ws_url(connect_ip, http_response)
+  ws_connection = ws_connect_to_chrome(ws_url)
 end
 
-function close_to_chrome(connection)
-  ws_close(connection)
+function close_to_chrome()
+  ws_close(ws_connection)
 end
 
-function translate_html_to_xml(connection)
+function translate_html_to_xml()
   local response =
-    send_command_to_chrome(connection,
+    send_command_to_chrome(ws_connection,
                           "{"..
                             "\"id\":0,"..
                             "\"method\":\"Runtime.evaluate\","..
@@ -68,14 +69,14 @@ function translate_html_to_xml(connection)
   return xml
 end
 
-function page_navigate(connection, page_url)
-  send_command_to_chrome(connection,
+function page_navigate(page_url)
+  send_command_to_chrome(ws_connection,
                         "{"..
                           "\"id\":0,"..
                           "\"method\":\"Page.enable\""..
                         "}")
   data =
-    send_command_to_chrome(connection,
+    send_command_to_chrome(ws_connection,
                           "{"..
                             "\"id\":0,"..
                             "\"method\":\"Page.navigate\","..
