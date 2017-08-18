@@ -39,7 +39,7 @@ function convert_html(connection_spec, html_path)
                   ");"))
   -- just for check
   xml = io.open('after-chrome.xml')
-  assert(pg:query("INSERT INTO contents VALUES (XMLPARSE(DOCUMENT " .. pg:escape_literal(xml:read('*all')) .. "))"))
+  assert(pg:query("INSERT INTO contents (xml) VALUES (XMLPARSE(DOCUMENT " .. pg:escape_literal(xml:read('*all')) .. "))"))
 end
 
 if #arg ~= 2 then
