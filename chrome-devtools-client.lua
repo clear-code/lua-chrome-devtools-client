@@ -40,9 +40,9 @@ function ws_close(ws)
   assert(ws:close())
 end
 
-function connect_to_chrome()
+function connect_to_chrome(connect_ip)
   local http_response =
-    http_connect_to_chrome("http://localhost:9222/json")
+    http_connect_to_chrome("http://"..connect_ip..":9222/json")
   local ws_url = get_ws_url(http_response)
   local ws = ws_connect_to_chrome(ws_url)
   return ws
@@ -65,7 +65,6 @@ function translate_html_to_xml(connection)
                             "}"..
                           "}")
   xml = json.decode(response).result.result.value
-  print(xml)
   return xml
 end
 
@@ -82,7 +81,7 @@ function page_navigate(connection, page_url)
                             "\"method\":\"Page.navigate\","..
                             "\"params\":"..
                             "{"..
-                              "\"url\":"..page_url..
+                              "\"url\":\""..page_url.."\""..
                             "}"..
                           "}")
   socket.sleep(1)
