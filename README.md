@@ -5,7 +5,7 @@ This module is connect to Chrome with chrome devtools protocol.
 
 LuaRocks Installation
 ---------------------
-`luarocks install lua-chrome-devtools-client`
+`luarocks install chrome-devtools-client`
 
 Dependency
 ----------

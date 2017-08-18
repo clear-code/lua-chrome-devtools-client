@@ -1,5 +1,5 @@
 package.path=package.path..';./?.lua'
-require("lua-websocket")
+require("chrome-devtools-client")
 
 local connection = chrome_devtools.connect_to_chrome()
 
