@@ -1,4 +1,4 @@
-package = "lua-chrome-devtools-client"
+package = "chrome-devtools-client"
 version = "0.1-1"
 source = {
    url = "git://github.com/clear-code/lua-chrome-devtools-client"
@@ -17,6 +17,6 @@ dependencies = {
 build = {
    type = "builtin",
    modules = {
-      ["lua-chrome-devtools-client"] = "lua-chrome-devtools-client.lua"
+      ["chrome-devtools-client"] = "chrome-devtools-client.lua"
    }
 }
