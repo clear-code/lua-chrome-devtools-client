@@ -17,43 +17,43 @@ Usage
 -----
 API List:
 
-- `chrome_devtools.connect_to_chrome`
-- `chrome_devtools.close_to_chrome`
-- `chrome_devtools.page_navigate`
-- `chrome_devtools.translate_html_to_xml`
+- `connect`
+- `close`
+- `page_navigate`
+- `translate_html_to_xml`
 
-### `chrome_devtools.connect_to_chrome`
+### `connect`
 
 #### Examples
 ```lua
-chrome_devtools.connect_to_chrome("localhost")
+local connection = chrome_devtools.connect("localhost")
 ```
 
-### `chrome_devtools.close_to_chrome`
+### `close`
 
 #### Examples
 ```lua
-chrome_devtools.connect_to_chrome("localhost")
-chrome_devtools.close_to_chrome()
+local connection = chrome_devtools.connect()
+chrome_devtools.close(connection)
 ```
 
-### `chrome_devtools.page_navigate`
+### `page_navigate`
 
 #### Examples
 ```lua
-chrome_devtools.connect_to_chrome("localhost")
-chrome_devtools.page_navigate("file:///tmp/test.html")
-chrome_devtools.close_to_chrome()
+local connection = chrome_devtools.connect_to_chrome()
+connection:page_navigate("file:///tmp/test.html")
+chrome_devtools.close(connection)
 ```
 
-### `chrome_devtools.translate_html_to_xml`
+### `translate_html_to_xml`
 
 #### Examples
 ```lua
-chrome_devtools.connect_to_chrome("localhost")
-xml = chrome_devtools.translate_html_to_xml()
-chrome_devtools.close_to_chrome()
+local connection = chrome_devtools.connect_to_chrome()
+xml = connection:translate_html_to_xml()
 print(xml)
+chrome_devtools.close(connection)
 ```
 
 License(MIT)
