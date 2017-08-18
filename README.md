@@ -24,14 +24,14 @@ API List:
 
 ### `chrome_devtools.connect_to_chrome`
 
-#### Exsamples
+#### Examples
 ```lua
 chrome_devtools.connect_to_chrome("localhost")
 ```
 
 ### `chrome_devtools.close_to_chrome`
 
-#### Exsamples
+#### Examples
 ```lua
 chrome_devtools.connect_to_chrome("localhost")
 chrome_devtools.close_to_chrome()
@@ -39,7 +39,7 @@ chrome_devtools.close_to_chrome()
 
 ### `chrome_devtools.page_navigate`
 
-#### Exsamples
+#### Examples
 ```lua
 chrome_devtools.connect_to_chrome("localhost")
 chrome_devtools.page_navigate("file:///tmp/test.html")
@@ -48,7 +48,7 @@ chrome_devtools.close_to_chrome()
 
 ### `chrome_devtools.translate_html_to_xml`
 
-#### Exsamples
+#### Examples
 ```lua
 chrome_devtools.connect_to_chrome("localhost")
 xml = chrome_devtools.translate_html_to_xml()
