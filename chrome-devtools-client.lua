@@ -6,9 +6,7 @@ local json = require("cjson")
 local websocket = require("http.websocket")
 local url = require("socket.url")
 
-local ws_connection = nil
-
-function http_connect_to_chrome(url)
+function http_connect(url)
   local http_response = {}
   local response,response_code,response_header =
     http.request{
@@ -27,35 +25,35 @@ function get_ws_url(connect_ip, http_response)
   return ws_url
 end
 
-function ws_connect_to_chrome(ws_url)
+function ws_connect(ws_url)
   local ws = websocket.new_from_uri(ws_url)
   assert(ws:connect())
   return ws
 end
 
-function send_command_to_chrome(ws, command)
-  assert(ws:send(command))
-  return assert(ws:receive())
-end
 
 function ws_close(ws)
   assert(ws:close())
 end
 
-function connect_to_chrome(connect_ip)
+function connect(connect_ip)
   local http_response =
-    http_connect_to_chrome("http://"..connect_ip..":9222/json")
+    http_connect("http://"..connect_ip..":9222/json")
   local ws_url = get_ws_url(connect_ip, http_response)
-  ws_connection = ws_connect_to_chrome(ws_url)
+  local ws_connection = ws_connect(ws_url)
+  return Devtools:new(ws_connection)
 end
 
-function close_to_chrome()
-  ws_close(ws_connection)
+function close(devtools)
+  ws_close(devtools.connection)
 end
 
-function translate_html_to_xml()
+
+-- Devtools Class
+Devtools = {}
+function Devtools.translate_html_to_xml(self)
   local response =
-    send_command_to_chrome(ws_connection,
+    Devtools:send_command(self.connection,
                           "{"..
                             "\"id\":0,"..
                             "\"method\":\"Runtime.evaluate\","..
@@ -69,14 +67,14 @@ function translate_html_to_xml()
   return xml
 end
 
-function page_navigate(page_url)
-  send_command_to_chrome(ws_connection,
+function Devtools.page_navigate(self, page_url)
+  Devtools:send_command(self.connection,
                         "{"..
                           "\"id\":0,"..
                           "\"method\":\"Page.enable\""..
                         "}")
   data =
-    send_command_to_chrome(ws_connection,
+    Devtools:send_command(self.connection,
                           "{"..
                             "\"id\":0,"..
                             "\"method\":\"Page.navigate\","..
@@ -86,4 +84,17 @@ function page_navigate(page_url)
                             "}"..
                           "}")
   socket.sleep(1)
+end
+
+function Devtools.send_command(self, ws, command)
+  assert(ws:send(command))
+  return assert(ws:receive())
+end
+
+function Devtools.new(self, connection)
+  local object = {}
+  setmetatable(object, object)
+  object.__index = self
+  object.connection = connection
+  return object
 end
