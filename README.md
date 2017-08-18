@@ -26,33 +26,33 @@ API List:
 
 #### Exsamples
 ```lua
-local connection = chrome_devtools.connect_to_chrome()
+chrome_devtools.connect_to_chrome("localhost")
 ```
 
 ### `chrome_devtools.close_to_chrome`
 
 #### Exsamples
 ```lua
-local connection = chrome_devtools.connect_to_chrome()
-chrome_devtools.close_to_chrome(connection)
+chrome_devtools.connect_to_chrome("localhost")
+chrome_devtools.close_to_chrome()
 ```
 
 ### `chrome_devtools.page_navigate`
 
 #### Exsamples
 ```lua
-local connection = chrome_devtools.connect_to_chrome()
-chrome_devtools.page_navigate(connection, "file:///tmp/test.html")
-chrome_devtools.close_to_chrome(connection)
+chrome_devtools.connect_to_chrome("localhost")
+chrome_devtools.page_navigate("file:///tmp/test.html")
+chrome_devtools.close_to_chrome()
 ```
 
 ### `chrome_devtools.translate_html_to_xml`
 
 #### Exsamples
 ```lua
-local connection = chrome_devtools.connect_to_chrome()
-xml = chrome_devtools.translate_html_to_xml(connection)
-chrome_devtools.close_to_chrome(connection)
+chrome_devtools.connect_to_chrome("localhost")
+xml = chrome_devtools.translate_html_to_xml()
+chrome_devtools.close_to_chrome()
 print(xml)
 ```
 
