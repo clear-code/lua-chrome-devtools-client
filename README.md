@@ -7,8 +7,8 @@ LuaRocks Installation
 ---------------------
 `luarocks install chrome-devtools-client`
 
-Dependency
-----------
+Dependencies
+------------
 - lua-cjson
 - http
 - luasocket
