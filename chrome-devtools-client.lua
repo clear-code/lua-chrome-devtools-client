@@ -42,43 +42,43 @@ end
 -- Client Class
 Client = {}
 function Client.convert_html_to_xml(self)
+  local command = {
+    id = 0,
+    method = "Runtime.evaluate",
+    params = {
+      expression =
+        "new XMLSerializer().serializeToString(document)"
+    }
+  }
   local response =
-    Client:send_command(self.connection,
-                          "{"..
-                            "\"id\":0,"..
-                            "\"method\":\"Runtime.evaluate\","..
-                            "\"params\":"..
-                            "{"..
-                              "\"expression\":"..
-                              "\"new XMLSerializer().serializeToString(document)\""..
-                            "}"..
-                          "}")
-  xml = json.decode(response).result.result.value
+    Client:send_command(self.connection, command)
+  xml = response.result.result.value
   return xml
 end
 
 function Client.page_navigate(self, page_url)
-  Client:send_command(self.connection,
-                        "{"..
-                          "\"id\":0,"..
-                          "\"method\":\"Page.enable\""..
-                        "}")
-  data =
-    Client:send_command(self.connection,
-                          "{"..
-                            "\"id\":0,"..
-                            "\"method\":\"Page.navigate\","..
-                            "\"params\":"..
-                            "{"..
-                              "\"url\":\""..page_url.."\""..
-                            "}"..
-                          "}")
+  local command = {
+      id = 0,
+      method = "Page.enable"
+  }
+  Client:send_command(self.connection, command)
+
+  command = {
+    id = 0,
+    method = "Page.navigate",
+    params = {
+      url = page_url
+    }
+  }
+  Client:send_command(self.connection, command)
   socket.sleep(1)
 end
 
 function Client.send_command(self, ws, command)
+  command = json.encode(command)
   assert(ws:send(command))
-  return assert(ws:receive())
+  local response = assert(ws:receive())
+  return json.decode(response)
 end
 
 function Client.close(self)
