@@ -1,5 +1,5 @@
-#!/usr/bin/env lua
-
+package.path=package.path..';./?.lua'
+local chrome_devtools = require("chrome-devtools-client")
 pgmoon = require("pgmoon-mashape")
 
 function split_text(text, delimiter)
@@ -28,7 +28,7 @@ function parse_connection_spec(connection_spec)
   return parsed_connection_spec
 end
 
-function convert_html(connection_spec, html_path)
+function save_xml(connection_spec, xml)
   parsed_connection_spec = parse_connection_spec(connection_spec)
   local pg = pgmoon.new(parsed_connection_spec)
   assert(pg:connect())
@@ -37,9 +37,8 @@ function convert_html(connection_spec, html_path)
                   "id serial,"..
                   "xml text"..
                   ");"))
-  -- just for check
-  xml = io.open('after-chrome.xml')
-  assert(pg:query("INSERT INTO contents (xml) VALUES (XMLPARSE(DOCUMENT " .. pg:escape_literal(xml:read('*all')) .. "))"))
+  assert(pg:query("INSERT INTO contents (xml)"..
+                  "VALUES (XMLPARSE(DOCUMENT " .. pg:escape_literal(xml) .. "))"))
 end
 
 if #arg ~= 2 then
@@ -48,4 +47,14 @@ if #arg ~= 2 then
   return 1
 end
 
-convert_html(arg[1], arg[2])
+local connect_ip = "localhost"
+local connect_port = "9222"
+local client = chrome_devtools.connect(connect_ip, connect_port)
+
+client:page_navigate("file://" ..arg[2])
+client:close()
+
+client = chrome_devtools.connect(connect_ip, connect_port)
+xml = client:convert_html_to_xml()
+save_xml(arg[1], xml)
+client:close()
