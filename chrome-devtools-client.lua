@@ -1,4 +1,4 @@
-module("chrome_devtools", package.seeall)
+local chrome_devtools = {}
 
 local http = require ("socket.http")
 local ltn12 = require("ltn12")
@@ -36,14 +36,14 @@ function connect(connect_ip)
     http_connect("http://"..connect_ip..":9222/json")
   local ws_url = get_ws_url(connect_ip, http_response)
   local ws_connection = ws_connect(ws_url)
-  return Devtools:new(ws_connection)
+  return Client:new(ws_connection)
 end
 
--- Devtools Class
-Devtools = {}
-function Devtools.convert_html_to_xml(self)
+-- Client Class
+Client = {}
+function Client.convert_html_to_xml(self)
   local response =
-    Devtools:send_command(self.connection,
+    Client:send_command(self.connection,
                           "{"..
                             "\"id\":0,"..
                             "\"method\":\"Runtime.evaluate\","..
@@ -57,14 +57,14 @@ function Devtools.convert_html_to_xml(self)
   return xml
 end
 
-function Devtools.page_navigate(self, page_url)
-  Devtools:send_command(self.connection,
+function Client.page_navigate(self, page_url)
+  Client:send_command(self.connection,
                         "{"..
                           "\"id\":0,"..
                           "\"method\":\"Page.enable\""..
                         "}")
   data =
-    Devtools:send_command(self.connection,
+    Client:send_command(self.connection,
                           "{"..
                             "\"id\":0,"..
                             "\"method\":\"Page.navigate\","..
@@ -76,19 +76,22 @@ function Devtools.page_navigate(self, page_url)
   socket.sleep(1)
 end
 
-function Devtools.send_command(self, ws, command)
+function Client.send_command(self, ws, command)
   assert(ws:send(command))
   return assert(ws:receive())
 end
 
-function Devtools.close(self)
+function Client.close(self)
   assert(self.connection:close())
 end
 
-function Devtools.new(self, connection)
+function Client.new(self, connection)
   local object = {}
   setmetatable(object, object)
   object.__index = self
   object.connection = connection
   return object
 end
+
+chrome_devtools.connect = connect
+return chrome_devtools
