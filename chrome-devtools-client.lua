@@ -16,11 +16,11 @@ function http_connect(url)
   return http_response
 end
 
-function get_ws_url(connect_ip, http_response)
+function get_ws_url(connect_ip, connect_port, http_response)
   local ws_url =
     json.decode(http_response[1])[1]["webSocketDebuggerUrl"]
-  if string.match(ws_url, connect_ip..":9222") == nil then
-    ws_url = string.gsub(ws_url, connect_ip, connect_ip..":9222")
+  if string.match(ws_url, connect_ip..":"..connect_port) == nil then
+    ws_url = string.gsub(ws_url, connect_ip, connect_ip..":"..connect_port)
   end
   return ws_url
 end
@@ -31,10 +31,13 @@ function ws_connect(ws_url)
   return ws
 end
 
-function connect(connect_ip)
+function connect(connect_ip, connect_port)
+  if connect_port == nil then
+    connect_port = 9222
+  end
   local http_response =
-    http_connect("http://"..connect_ip..":9222/json")
-  local ws_url = get_ws_url(connect_ip, http_response)
+    http_connect("http://"..connect_ip..":"..connect_port.."/json")
+  local ws_url = get_ws_url(connect_ip, connect_port, http_response)
   local ws_connection = ws_connect(ws_url)
   return Client:new(ws_connection)
 end
