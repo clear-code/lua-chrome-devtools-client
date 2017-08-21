@@ -20,40 +20,48 @@ API List:
 - `connect`
 - `close`
 - `page_navigate`
-- `translate_html_to_xml`
+- `convert_html_to_xml`
 
 ### `connect`
 
 #### Examples
 ```lua
-local connection = chrome_devtools.connect("localhost")
+local chrome_devtools = require("chrome-devtools-client")
+
+local client = chrome_devtools.connect("localhost")
 ```
 
 ### `close`
 
 #### Examples
 ```lua
-local connection = chrome_devtools.connect()
-chrome_devtools.close(connection)
+local chrome_devtools = require("chrome-devtools-client")
+
+local client = chrome_devtools.connect("localhost")
+client:close()
 ```
 
 ### `page_navigate`
 
 #### Examples
 ```lua
-local connection = chrome_devtools.connect_to_chrome()
-connection:page_navigate("file:///tmp/test.html")
-chrome_devtools.close(connection)
+local chrome_devtools = require("chrome-devtools-client")
+
+local client = chrome_devtools.connect("localhost")
+client:page_navigate("file:///tmp/test.html")
+client:close(connection)
 ```
 
 ### `translate_html_to_xml`
 
 #### Examples
 ```lua
-local connection = chrome_devtools.connect_to_chrome()
-xml = connection:translate_html_to_xml()
+local chrome_devtools = require("chrome-devtools-client")
+
+local client = chrome_devtools.connect("localhost")
+xml = client:convert_html_to_xml()
 print(xml)
-chrome_devtools.close(connection)
+client:close(connection)
 ```
 
 License(MIT)
