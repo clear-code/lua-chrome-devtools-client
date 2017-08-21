@@ -31,11 +31,6 @@ function ws_connect(ws_url)
   return ws
 end
 
-
-function ws_close(ws)
-  assert(ws:close())
-end
-
 function connect(connect_ip)
   local http_response =
     http_connect("http://"..connect_ip..":9222/json")
@@ -44,14 +39,9 @@ function connect(connect_ip)
   return Devtools:new(ws_connection)
 end
 
-function close(devtools)
-  ws_close(devtools.connection)
-end
-
-
 -- Devtools Class
 Devtools = {}
-function Devtools.translate_html_to_xml(self)
+function Devtools.convert_html_to_xml(self)
   local response =
     Devtools:send_command(self.connection,
                           "{"..
@@ -89,6 +79,10 @@ end
 function Devtools.send_command(self, ws, command)
   assert(ws:send(command))
   return assert(ws:receive())
+end
+
+function Devtools.close(self)
+  assert(self.connection:close())
 end
 
 function Devtools.new(self, connection)
