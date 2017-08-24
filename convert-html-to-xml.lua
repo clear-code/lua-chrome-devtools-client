@@ -27,17 +27,19 @@ function parse_connection_spec(connection_spec)
   return parsed_connection_spec
 end
 
-function save_xml(connection_spec, xml)
+function save_xml(connection_spec, xml, source_html_path)
   parsed_connection_spec = parse_connection_spec(connection_spec)
   local pg = pgmoon.new(parsed_connection_spec)
   assert(pg:connect())
 
   assert(pg:query("CREATE TABLE IF NOT EXISTS converted_xml("..
                   "id serial,"..
-                  "xml xml"..
+                  "xml xml,"..
+                  "source_html_path text"..
                   ");"))
-  assert(pg:query("INSERT INTO converted_xml (xml)"..
-                  "VALUES (XMLPARSE(DOCUMENT " .. pg:escape_literal(xml) .. "))"))
+  assert(pg:query("INSERT INTO converted_xml (xml, source_html_path)"..
+                  "VALUES (XMLPARSE(DOCUMENT " .. pg:escape_literal(xml) .. "), "..
+                           pg:escape_literal(source_html_path)..")"))
 end
 
 if #arg ~= 2 then
@@ -56,6 +58,6 @@ client:close()
 
 client = chrome_devtools.connect(connect_ip, connect_port)
 xml = client:convert_html_to_xml()
-save_xml(arg[1], xml)
+save_xml(arg[1], xml, arg[2])
 client:close()
 os.exit(0)
