@@ -6,7 +6,9 @@ local json = require("cjson")
 local websocket = require("http.websocket")
 local url = require("socket.url")
 
-function http_connect(url)
+-- Client Class
+Client = {}
+function Client.http_connect(url)
   local http_response = {}
   local response,response_code,response_header =
     http.request{
@@ -16,7 +18,7 @@ function http_connect(url)
   return http_response
 end
 
-function get_ws_url(connect_ip, connect_port, http_response)
+function Client.get_ws_url(connect_ip, connect_port, http_response)
   local ws_url =
     json.decode(http_response[1])[1]["webSocketDebuggerUrl"]
   if string.match(ws_url, connect_ip..":"..connect_port) == nil then
@@ -25,26 +27,34 @@ function get_ws_url(connect_ip, connect_port, http_response)
   return ws_url
 end
 
-function ws_connect(ws_url)
+function Client.ws_connect(ws_url)
   local ws = websocket.new_from_uri(ws_url)
   assert(ws:connect())
   return ws
 end
 
-function connect(connect_ip, connect_port)
+function Client.connect(self, connect_ip, connect_port)
   if connect_port == nil then
     connect_port = 9222
   end
   local http_response =
-    http_connect("http://"..connect_ip..":"..connect_port.."/json")
-  local ws_url = get_ws_url(connect_ip, connect_port, http_response)
-  local ws_connection = ws_connect(ws_url)
-  return Client:new(ws_connection)
+    self.http_connect("http://"..connect_ip..":"..connect_port.."/json")
+  local ws_url = self.get_ws_url(connect_ip, connect_port, http_response)
+  local ws_connection = self.ws_connect(ws_url)
+  self.connection = ws_connection
+  self.connect_ip = connect_ip
+  self.connect_port = connect_port
 end
 
--- Client Class
-Client = {}
-function Client.convert_html_to_xml(self)
+function Client.convert_html_to_xml(self, html_url)
+  local reconnect_ip = self.connect_ip
+  local reconnect_port = self.connect_port
+
+  self:page_navigate(html_url)
+  self.connection:close()
+
+  Client:connect(reconnect_ip, reconnect_port)
+
   local command = {
     id = 0,
     method = "Runtime.evaluate",
@@ -54,7 +64,8 @@ function Client.convert_html_to_xml(self)
     }
   }
   local response =
-    Client:send_command(self.connection, command)
+    Client.send_command(Client.connection, command)
+  Client.connection:close()
   xml = response.result.result.value
   return xml
 end
@@ -64,7 +75,7 @@ function Client.page_navigate(self, page_url)
       id = 0,
       method = "Page.enable"
   }
-  Client:send_command(self.connection, command)
+  self.send_command(self.connection, command)
 
   command = {
     id = 0,
@@ -73,11 +84,11 @@ function Client.page_navigate(self, page_url)
       url = page_url
     }
   }
-  Client:send_command(self.connection, command)
+  self.send_command(self.connection, command)
   socket.sleep(1)
 end
 
-function Client.send_command(self, ws, command)
+function Client.send_command(ws, command)
   command = json.encode(command)
   assert(ws:send(command))
   local response = assert(ws:receive())
@@ -88,13 +99,12 @@ function Client.close(self)
   assert(self.connection:close())
 end
 
-function Client.new(self, connection)
+function Client.new(self)
   local object = {}
   setmetatable(object, object)
   object.__index = self
-  object.connection = connection
+  object.connection = nil
+  object.connect_ip = nil
+  object.connect_port = nil
   return object
-end
-
-chrome_devtools.connect = connect
-return chrome_devtools
+ end
