@@ -26,18 +26,20 @@ API List:
 
 #### Examples
 ```lua
-local chrome_devtools = require("chrome-devtools-client")
+require("chrome-devtools-client")
 
-local client = chrome_devtools.connect("localhost")
+local client = Client:new()
+client:connect("localhost", "9222")
 ```
 
 ### `close`
 
 #### Examples
 ```lua
-local chrome_devtools = require("chrome-devtools-client")
+require("chrome-devtools-client")
 
-local client = chrome_devtools.connect("localhost")
+local client = Client:new()
+client:connect("localhost", "9222")
 client:close()
 ```
 
@@ -45,23 +47,27 @@ client:close()
 
 #### Examples
 ```lua
-local chrome_devtools = require("chrome-devtools-client")
+require("chrome-devtools-client")
 
-local client = chrome_devtools.connect("localhost")
+local client = Client:new()
+client:connect("localhost", "9222")
+
 client:page_navigate("file:///tmp/test.html")
-client:close(connection)
+client:close()
 ```
 
 ### `translate_html_to_xml`
 
 #### Examples
 ```lua
-local chrome_devtools = require("chrome-devtools-client")
+require("chrome-devtools-client")
 
-local client = chrome_devtools.connect("localhost")
-xml = client:convert_html_to_xml()
+local client = Client:new()
+client:connect("localhost", "9222")
+
+xml = client:convert_html_to_xml("/tmp/test.html")
 print(xml)
-client:close(connection)
+client:close()
 ```
 
 License(MIT)

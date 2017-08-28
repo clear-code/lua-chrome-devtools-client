@@ -50,6 +50,7 @@ function Client.convert_html_to_xml(self, html_url)
   local reconnect_ip = self.connect_ip
   local reconnect_port = self.connect_port
 
+  html_url = "file://"..html_url
   self:page_navigate(html_url)
   self:close()
   self:connect(reconnect_ip, reconnect_port)
