@@ -51,9 +51,8 @@ function Client.convert_html_to_xml(self, html_url)
   local reconnect_port = self.connect_port
 
   self:page_navigate(html_url)
-  self.connection:close()
-
-  Client:connect(reconnect_ip, reconnect_port)
+  self:close()
+  self:connect(reconnect_ip, reconnect_port)
 
   local command = {
     id = 0,
@@ -64,8 +63,7 @@ function Client.convert_html_to_xml(self, html_url)
     }
   }
   local response =
-    Client.send_command(Client.connection, command)
-  Client.connection:close()
+    self.send_command(self.connection, command)
   xml = response.result.result.value
   return xml
 end
@@ -107,4 +105,4 @@ function Client.new(self)
   object.connect_ip = nil
   object.connect_port = nil
   return object
- end
+end
