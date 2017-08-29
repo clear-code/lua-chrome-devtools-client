@@ -56,7 +56,7 @@ client:page_navigate("file:///tmp/test.html")
 client:close()
 ```
 
-### `translate_html_to_xml`
+### `convert_html_to_xml`
 
 #### Examples
 ```lua
@@ -65,9 +65,16 @@ require("chrome-devtools-client")
 local client = Client:new()
 client:connect("localhost", "9222")
 
-xml = client:convert_html_to_xml("/tmp/test.html")
+xml = client:convert_html_to_xml(html_data)
 print(xml)
 client:close()
+```
+
+argument of convert_html_to_xml is HTML data(string).
+HTML data is below.
+
+```lua
+local html_data = "<!DOCTYPE html><meta charset=utf-8><title>Hello World</title>"
 ```
 
 License(MIT)

@@ -5,22 +5,29 @@ local ltn12 = require("ltn12")
 local json = require("cjson")
 local websocket = require("http.websocket")
 local url = require("socket.url")
+local basexx = require("basexx")
 
 -- Client Class
 Client = {}
 function Client.http_connect(url)
-  local http_response = {}
+  local response_table = {}
+  local http_response = ""
+
   local response,response_code,response_header =
     http.request{
       url = url,
-      sink = ltn12.sink.table(http_response),
+      sink = ltn12.sink.table(response_table)
     }
+  for i=1, #response_table do
+    http_response =
+      http_response..response_table[i]
+  end
   return http_response
 end
 
 function Client.get_ws_url(connect_ip, connect_port, http_response)
   local ws_url =
-    json.decode(http_response[1])[1]["webSocketDebuggerUrl"]
+    json.decode(http_response)[1]["webSocketDebuggerUrl"]
   if string.match(ws_url, connect_ip..":"..connect_port) == nil then
     ws_url = string.gsub(ws_url, connect_ip, connect_ip..":"..connect_port)
   end
@@ -46,12 +53,11 @@ function Client.connect(self, connect_ip, connect_port)
   self.connect_port = connect_port
 end
 
-function Client.convert_html_to_xml(self, html_url)
+function Client.convert_html_to_xml(self, html)
   local reconnect_ip = self.connect_ip
   local reconnect_port = self.connect_port
 
-  html_url = "file://"..html_url
-  self:page_navigate(html_url)
+  self:page_navigate("data:text/html;charset=UTF-8;base64,"..basexx.to_base64(html))
   self:close()
   self:connect(reconnect_ip, reconnect_port)
 
