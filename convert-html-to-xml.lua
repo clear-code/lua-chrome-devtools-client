@@ -6,7 +6,12 @@ local connect_port = "9222"
 
 local client = Client:new()
 client:connect(connect_ip, connect_port)
-xml = client:convert_html_to_xml(arg[2])
+
+local fd = io.open(arg[2], "r")
+local html = fd:read("*all")
+fd:close()
+
+xml = client:convert_html_to_xml(html)
 client:close()
 
 local pgclient = PGClient:new()
