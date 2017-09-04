@@ -119,6 +119,16 @@ function Client.split_lines(data)
   return result
 end
 
+function Client.remove_double_hyphen(line)
+  local found
+  found = string.find(line, "--", 1, true)
+  while found do
+    line = string.gsub(line, "%-%-", "%-")
+    found = string.find(line, "--", 1, true)
+  end
+  return line
+end
+
 function Client.new(self)
   local object = {}
   setmetatable(object, object)
