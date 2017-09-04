@@ -57,6 +57,8 @@ function Client.convert_html_to_xml(self, html)
   local reconnect_ip = self.connect_ip
   local reconnect_port = self.connect_port
 
+  html = self:html_remove_double_hyphen(html)
+  assert(html)
   self:page_navigate("data:text/html;charset=UTF-8;base64,"..basexx.to_base64(html))
   self:close()
   self:connect(reconnect_ip, reconnect_port)
