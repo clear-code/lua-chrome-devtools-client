@@ -104,6 +104,21 @@ function Client.close(self)
   assert(self.connection:close())
 end
 
+function Client.split_lines(data)
+  local result = {}
+  if data:match("(.-)\r\n") then
+    data = data.."\r\n"
+  else
+    data = data.."\n"
+  end
+  local function splitter(line)
+    table.insert(result, line)
+    return ""
+  end
+  data:gsub("(.-)\r?\n", splitter)
+  return result
+end
+
 function Client.new(self)
   local object = {}
   setmetatable(object, object)
