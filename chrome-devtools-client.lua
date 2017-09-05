@@ -12,7 +12,6 @@ Client = {}
 function Client.http_connect(url)
   local response_table = {}
   local http_response = ""
-
   local response,response_code,response_header =
     http.request{
       url = url,
@@ -60,8 +59,6 @@ function Client.convert_html_to_xml(self, html)
   html = self:html_remove_double_hyphen(html)
   assert(html)
   self:page_navigate("data:text/html;charset=UTF-8;base64,"..basexx.to_base64(html))
-  self:close()
-  self:connect(reconnect_ip, reconnect_port)
 
   local command = {
     id = 0,
@@ -93,6 +90,16 @@ function Client.page_navigate(self, page_url)
   }
   self.send_command(self.connection, command)
   socket.sleep(1)
+
+  command = {
+    id = 0,
+    method = "Page.loadEventFired"
+  }
+  self.send_command(self.connection, command)
+
+  repeat
+    local response = assert(self.connection:receive())
+  until (json.decode(response)["error"]) ~= nil
 end
 
 function Client.send_command(ws, command)
