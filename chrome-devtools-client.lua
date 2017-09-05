@@ -57,6 +57,8 @@ function Client.convert_html_to_xml(self, html)
   local reconnect_ip = self.connect_ip
   local reconnect_port = self.connect_port
 
+  html = self:html_remove_double_hyphen(html)
+  assert(html)
   self:page_navigate("data:text/html;charset=UTF-8;base64,"..basexx.to_base64(html))
   self:close()
   self:connect(reconnect_ip, reconnect_port)
@@ -102,6 +104,137 @@ end
 
 function Client.close(self)
   assert(self.connection:close())
+end
+
+function Client.split_lines(data)
+  local result = {}
+  if data:match("(.-)\r\n") then
+    data = data.."\r\n"
+  else
+    data = data.."\n"
+  end
+  local function splitter(line)
+    table.insert(result, line)
+    return ""
+  end
+  data:gsub("(.-)\r?\n", splitter)
+  return result
+end
+
+function Client.find_pattern_line_index(pattern, index, lines)
+  local s
+  while (index <= #lines) do
+    s = string.find(lines[index], pattern, 1, true)
+    if s then
+      if pattern == "<!--" then
+        if not string.find(lines[index], "<!--[", s, true) then
+          return index
+	end
+      else
+        return index
+      end
+    end
+    index = index + 1
+  end
+  return nil
+end
+
+function Client.remove_double_hyphen(line)
+  local found
+  found = string.find(line, "--", 1, true)
+  while found do
+    line = string.gsub(line, "%-%-", "%-")
+    found = string.find(line, "--", 1, true)
+  end
+  return line
+end
+
+function Client.remove_hyphen_from_line(self, line)
+  local s, e
+  local pre, middle, post
+  s = string.find(line, "<!--", 1, true)
+  e = string.find(line, "-->", s + 4, true)
+  if s and e then
+    pre = string.sub(line, 1, s + 3)
+    middle = string.sub(line, s + 4, e - 1)
+    post = string.sub(line, e)
+    return pre..string.gsub(middle, "-", "")..post
+  else
+    return line
+  end
+end
+
+function Client.remove_hyphen_in_comment(self, line)
+  local result
+  local s = string.find(line, "<!--", 1, true)
+  local e = string.find(line, "-->", 1, true)
+  local pre, post
+  if s then
+    pre = string.sub(line, 1, s + 3)
+    post = string.sub(line, s + 4)
+    result = pre..string.gsub(post, "-", "")
+  elseif e then
+    pre = string.sub(line, 1, e - 1)
+    post = string.sub(line, e)
+    result = string.gsub(pre, "-", "")..post
+  end
+  return result
+end
+
+function Client.html_remove_double_hyphen(self, html)
+  local lines = self.split_lines(html)
+  local result = {}
+  local index = 1
+  local pre, middle, post
+  local extracted
+  local start_index, end_index
+  local value
+  while (index <= #lines) do
+    start_index = self.find_pattern_line_index("<!--", index, lines)
+    end_index = self.find_pattern_line_index("-->", index, lines)
+    if start_index and end_index then
+      if index < start_index and start_index <= end_index then
+        for i = index, start_index - 1 do
+          table.insert(result, lines[i])
+        end
+      end
+      if start_index == end_index then
+        -- single line
+        extracted = self:remove_hyphen_from_line(lines[start_index])
+        table.insert(result, extracted)
+        index = start_index + 1
+      elseif start_index < end_index then
+        -- multi line
+        pre = self:remove_hyphen_in_comment(lines[start_index])
+        table.insert(result, pre)
+        for i = start_index + 1, end_index - 1 do
+          middle = string.gsub(lines[i], "-", "")
+          table.insert(result, middle)
+        end
+        post = self:remove_hyphen_in_comment(lines[end_index])
+        table.insert(result, post)
+        index = end_index + 1
+      else
+        -- not match
+        if index < start_index then
+          for i = index, start_index - 1 do
+            table.insert(result, lines[i])
+          end
+        end
+	index = start_index
+      end
+    else
+      for i = index, #lines do
+        table.insert(result, lines[i])
+      end
+      index = #lines + 1
+    end
+  end
+  value = ""
+  for i,v in pairs(result) do
+    value = value.."\r\n"..v
+  end
+  return value
 end
 
 function Client.new(self)
