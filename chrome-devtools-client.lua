@@ -58,6 +58,8 @@ function Client.convert_html_to_xml(self, html)
 
   html = self:html_remove_double_hyphen(html)
   assert(html)
+  html = self:html_remove_office_p_tag(html)
+  assert(html)
   self:page_navigate("data:text/html;charset=UTF-8;base64,"..basexx.to_base64(html))
 
   local command = {
@@ -242,6 +244,12 @@ function Client.html_remove_double_hyphen(self, html)
     value = value.."\r\n"..v
   end
   return value
+end
+
+function Client.html_remove_office_p_tag(self, html)
+  pre = string.gsub(html, "<o:p", "<p")
+  post = string.gsub(pre, "/o:p>", "/p>")
+  return string.gsub(post, "\r?\n", "")
 end
 
 function Client.new(self)
