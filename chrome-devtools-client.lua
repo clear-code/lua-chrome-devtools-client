@@ -174,7 +174,20 @@ function Client.remove_hyphen_in_multi_line(self, line, offset)
   local right_bracket_start, right_bracket_end = string.find(line, "-->", offset, true)
   local pre, post
 
-  if left_bracket_start then
+  if left_bracket_start and right_bracket_start then
+    if right_bracket_end < left_bracket_start then
+      -- -->body<!--
+      pre = string.sub(line, 1, right_bracket_start - 1)
+      middle = string.sub(line, right_bracket_start, left_bracket_end)
+      post = string.sub(line, left_bracket_end + 1)
+      result = string.gsub(pre, "-", "")..middle..string.gsub(post, "-", "")
+    else
+      pre = string.sub(line, 1, left_bracket_end)
+      middle = string.sub(line, left_bracket_end + 1, right_bracket_start - 1)
+      post = string.sub(line, right_bracket_start)
+      result = pre..string.gsub(middle, "-", "")..post
+    end
+  elseif left_bracket_start then
     pre = string.sub(line, 1, left_bracket_end)
     post = string.sub(line, left_bracket_end + 1)
     result = pre..string.gsub(post, "-", "") -- Remove hyphen in comment
@@ -219,7 +232,20 @@ function Client.html_remove_double_hyphen(self, html)
           table.insert(result, middle)
         end
         post = self:remove_hyphen_in_multi_line(lines[end_index])
-        table.insert(result, post)
+        index = end_index
+        left_bracket_start = string.find(lines[end_index], "<!--", 1, true)
+        if left_bracket_start then
+          table.insert(result, post)
+          end_index = self.find_pattern_line_index("-->", index + 1, lines)
+          for i = index + 1, end_index - 1 do
+            middle = string.gsub(lines[i], "-", "")
+            table.insert(result, middle)
+          end
+          post = self:remove_hyphen_in_multi_line(lines[end_index])
+          table.insert(result, post)
+        else
+           table.insert(result, post)
+        end
         index = end_index + 1
       else
         -- not match
