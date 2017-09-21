@@ -156,7 +156,7 @@ function Client.remove_hyphen_from_single_line(self, line)
   local pre, middle, post
 
   if left_bracket_start and right_bracket_start then
-    pre = string.sub(line, left_bracket_start, left_bracket_end)
+    pre = string.sub(line, 1, left_bracket_end)
     middle = string.sub(line, left_bracket_end + 1, right_bracket_start - 1)
     post = string.sub(line, right_bracket_start)
     return pre..string.gsub(middle, "-", "")..post -- Remove htphen in commentt
