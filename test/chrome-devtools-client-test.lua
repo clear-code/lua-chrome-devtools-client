@@ -22,4 +22,20 @@ function test_html_remove_office_p_tag()
   end
 end
 
+function test_remove_hyphen_from_single_line()
+  test_data = {}
+  expect_data = {}
+
+  table.insert(test_data, "pre<!---comment--->post")
+
+  table.insert(expect_data, "pre<!--comment-->post")
+
+  local client = Client:new()
+  for i = 1, #test_data do
+     result = client:remove_hyphen_from_single_line(test_data[i])
+     assert(expect_data[i] == result)
+  end
+end
+
 test_html_remove_office_p_tag()
+test_remove_hyphen_from_single_line()
