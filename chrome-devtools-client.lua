@@ -159,7 +159,7 @@ function Client.remove_hyphen_from_single_line(self, line)
     pre = string.sub(line, 1, left_bracket_end)
     middle = string.sub(line, left_bracket_end + 1, right_bracket_start - 1)
     post = string.sub(line, right_bracket_start)
-    return pre..string.gsub(middle, "-", "")..post -- Remove htphen in commentt
+    return pre..string.gsub(middle, "-", "")..post -- Remove hyphen in comment
   else
     return line
   end
@@ -177,11 +177,11 @@ function Client.remove_hyphen_in_multi_line(self, line)
   if left_bracket_start then
     pre = string.sub(line, left_bracket_start, left_bracket_end)
     post = string.sub(line, left_bracket_end+1)
-    result = pre..string.gsub(post, "-", "") -- Remove htphen in comment
+    result = pre..string.gsub(post, "-", "") -- Remove hyphen in comment
   elseif right_bracket_start then
     pre = string.sub(line, 1, right_bracket_start-1)
     post = string.sub(line, right_bracket_start)
-    result = string.gsub(pre, "-", "")..post -- Remove htphen in comment
+    result = string.gsub(pre, "-", "")..post -- Remove hyphen in comment
   end
 
   return result
