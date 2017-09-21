@@ -168,18 +168,18 @@ end
 --[[
   This function only use with multi line comment.
 ]]--
-function Client.remove_hyphen_in_multi_line(self, line)
+function Client.remove_hyphen_in_multi_line(self, line, offset)
   local result
-  local left_bracket_start, left_bracket_end = string.find(line, "<!--", 1, true)
-  local right_bracket_start, right_bracket_end = string.find(line, "-->", 1, true)
+  local left_bracket_start, left_bracket_end = string.find(line, "<!--", offset, true)
+  local right_bracket_start, right_bracket_end = string.find(line, "-->", offset, true)
   local pre, post
 
   if left_bracket_start then
-    pre = string.sub(line, left_bracket_start, left_bracket_end)
-    post = string.sub(line, left_bracket_end+1)
+    pre = string.sub(line, 1, left_bracket_end)
+    post = string.sub(line, left_bracket_end + 1)
     result = pre..string.gsub(post, "-", "") -- Remove hyphen in comment
   elseif right_bracket_start then
-    pre = string.sub(line, 1, right_bracket_start-1)
+    pre = string.sub(line, 1, right_bracket_start - 1)
     post = string.sub(line, right_bracket_start)
     result = string.gsub(pre, "-", "")..post -- Remove hyphen in comment
   end

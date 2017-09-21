@@ -25,9 +25,11 @@ end
 function test_remove_hyphen_from_single_line()
   test_data = {}
   expect_data = {}
+  offset_data = {}
 
   table.insert(test_data, "pre<!---comment--->post")
 
+  table.insert(expect_data, "pre<!--comment-->post")
   table.insert(expect_data, "pre<!--comment-->post")
 
   local client = Client:new()
@@ -37,5 +39,36 @@ function test_remove_hyphen_from_single_line()
   end
 end
 
+function test_remove_hyphen_in_multi_line()
+  test_data = {}
+  expect_data = {}
+  offset_data = {}
+
+  table.insert(test_data, "pre-<!---comment\r\n-post")
+  table.insert(test_data, "comment--->\r\n-post-")
+  table.insert(test_data, "<!---keep---><!---\r\ncomment")
+  table.insert(test_data, "-comment--->\r\n---keep--->")
+  table.insert(test_data, "-comment--->\r\n---comment2--->")
+
+  table.insert(expect_data, "pre-<!--comment\r\npost")
+  table.insert(expect_data, "comment-->\r\n-post-")
+  table.insert(expect_data, "<!---keep---><!--\r\ncomment")
+  table.insert(expect_data, "comment-->\r\n---keep--->")
+  table.insert(expect_data, "comment>\r\ncomment2-->")
+
+  table.insert(offset_data, 1)
+  table.insert(offset_data, 1)
+  table.insert(offset_data, 12)
+  table.insert(offset_data, 1)
+  table.insert(offset_data, 11)
+
+  local client = Client:new()
+  for i = 1, #test_data do
+    result = client:remove_hyphen_in_multi_line(test_data[i], offset_data[i])
+    assert(expect_data[i] == result)
+  end
+end
+
 test_html_remove_office_p_tag()
 test_remove_hyphen_from_single_line()
+test_remove_hyphen_in_multi_line()
