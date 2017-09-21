@@ -25,11 +25,9 @@ end
 function test_remove_hyphen_from_single_line()
   test_data = {}
   expect_data = {}
-  offset_data = {}
 
   table.insert(test_data, "pre<!---comment--->post")
 
-  table.insert(expect_data, "pre<!--comment-->post")
   table.insert(expect_data, "pre<!--comment-->post")
 
   local client = Client:new()
