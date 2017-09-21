@@ -170,8 +170,8 @@ end
 ]]--
 function Client.remove_hyphen_in_multi_line(self, line, offset)
   local result
-  local left_bracket_start, left_bracket_end = string.find(line, "<!--", 1, true)
-  local right_bracket_start, right_bracket_end = string.find(line, "-->", 1, true)
+  local left_bracket_start, left_bracket_end = string.find(line, "<!--", offset, true)
+  local right_bracket_start, right_bracket_end = string.find(line, "-->", offset, true)
   local pre, post
 
   if left_bracket_start then
