@@ -179,7 +179,6 @@ function Client.html_remove_double_hyphen(self, html)
       match_data = rex.match(html_lines, "<!--|-->", position)
     end
     sanitized_xml = sanitized_xml..html_lines:sub(position, -1)
-    print("result", sanitized_xml)
   end
 
   remove_double_hyphen(html)
