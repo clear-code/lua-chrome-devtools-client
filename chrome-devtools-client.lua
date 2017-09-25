@@ -174,7 +174,20 @@ function Client.remove_hyphen_in_multi_line(self, line, offset)
   local right_bracket_start, right_bracket_end = string.find(line, "-->", offset, true)
   local pre, post
 
-  if left_bracket_start then
+  if left_bracket_start and right_bracket_start then
+    if right_bracket_end < left_bracket_start then
+      -- -->body<!--
+      pre = string.sub(line, 1, right_bracket_start - 1)
+      middle = string.sub(line, right_bracket_start, left_bracket_end)
+      post = string.sub(line, left_bracket_end + 1)
+      result = string.gsub(pre, "-", "")..middle..string.gsub(post, "-", "")
+    else
+      pre = string.sub(line, 1, left_bracket_end)
+      middle = string.sub(line, left_bracket_end + 1, right_bracket_start - 1)
+      post = string.sub(line, right_bracket_start)
+      result = pre..string.gsub(middle, "-", "")..post
+    end
+  elseif left_bracket_start then
     pre = string.sub(line, 1, left_bracket_end)
     post = string.sub(line, left_bracket_end + 1)
     result = pre..string.gsub(post, "-", "") -- Remove hyphen in comment
@@ -188,7 +201,66 @@ function Client.remove_hyphen_in_multi_line(self, line, offset)
 end
 
 function Client.html_remove_double_hyphen(self, html)
-  local lines = self.split_lines(html)
+  local test_index = 1
+  local nest_count = 0
+  local split_start_point = 0
+  local split_end_point = 0
+  local start_comment_start_point = 0
+  local start_comment_end_point = 0
+  local end_comment_start_point = 0
+  local end_comment_end_point = 0
+  print("html", html)
+  local html_lines = self.split_lines(html)
+  regex = string.regexp("hello", "i")
+  print("regex", regex)
+--  html = "<!-- test<!-- hoge -->post-->"
+
+  local function test_remove(index, html_lines)
+  --  print("html", html_lines)
+    print("before", index, html_lines, nest_count)
+--    print("end_comment_find?", html_lines:find("<!%-%-", index))
+    if (html_lines:find("<!%-%-", index) or html_lines:find("%-%->", index)) then
+      if html_lines:find("<!%-%-", index) then
+        start_comment_start_point, start_comment_end_point = html_lines:find("<!%-%-", index)
+        if nest_count == 0 then
+          split_start_point = start_comment_end_point+1
+        end
+        nest_count = nest_count + 1
+        test_remove(start_comment_end_point+1, html_lines)
+      else
+        print("test")
+        if nest_count ~= 0 then
+          nest_count = nest_count - 1
+          end_comment_start_point, end_comment_end_point = html_lines:find("%-%->", index)
+          if nest_count == 0 then
+            splited_str = html_lines:sub(split_start_point, end_comment_start_point-1)
+            print("result", splited_str)
+          else
+            test_remove(end_comment_end_point+1, html_lines)
+          end
+        end
+      end
+      test_index = index
+    end
+--    if nest_count == 0 and split_start_point ~=0 then
+--      end_comment_start_point, end_comment_end_point = html_lines:find("%-%->", index)
+--      splited_str = html_lines:sub(split_start_point, end_comment_start_point-1)
+--      print("result", splited_str)
+--    end
+  end
+
+  for i=1, #html_lines, 1 do
+    print("index", test_index)
+    test_remove(test_index, html)
+  end
+--  local html_lines = self.split_lines(html)
+--  for i=1, #html_lines, 1 do
+--    start_comment_start_point, start_comment_end_point = html:find("<!%-%-")
+--    end_comment_start_point, end_comment_end_point = html:find("%-%->")
+--    splited_str = html:sub(start_comment_end_point+1, end_comment_start_point-1)
+--    print(splited_str)
+--  end
+--[[
   local result = {}
   local index = 1
   local pre, middle, post
@@ -219,7 +291,20 @@ function Client.html_remove_double_hyphen(self, html)
           table.insert(result, middle)
         end
         post = self:remove_hyphen_in_multi_line(lines[end_index])
-        table.insert(result, post)
+        index = end_index
+        left_bracket_start = string.find(lines[end_index], "<!--", 1, true)
+        if left_bracket_start then
+          table.insert(result, post)
+          end_index = self.find_pattern_line_index("-->", index + 1, lines)
+          for i = index + 1, end_index - 1 do
+            middle = string.gsub(lines[i], "-", "")
+            table.insert(result, middle)
+          end
+          post = self:remove_hyphen_in_multi_line(lines[end_index])
+          table.insert(result, post)
+        else
+           table.insert(result, post)
+        end
         index = end_index + 1
       else
         -- not match
@@ -243,6 +328,7 @@ function Client.html_remove_double_hyphen(self, html)
     value = value.."\r\n"..v
   end
   return value
+--]]
 end
 
 function Client.html_remove_office_p_tag(self, html)

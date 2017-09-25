@@ -67,6 +67,27 @@ function test_remove_hyphen_in_multi_line()
   end
 end
 
-test_html_remove_office_p_tag()
-test_remove_hyphen_from_single_line()
-test_remove_hyphen_in_multi_line()
+function test_html_remove_double_hyphen()
+  test_data = {}
+  expect_data = {}
+
+  table.insert(test_data, "<!----->\r\n")
+  table.insert(test_data, "<!--\r\n-comment-\r\n-->\r\n")
+  table.insert(test_data, "<!--\r\ncomment\r\n--><!---\r\ncomment2\r\n--->\r\n")
+
+  table.insert(expect_data, "\r\n<!---->\r\n")
+  table.insert(expect_data, "\r\n<!--\r\ncomment\r\n-->\r\n")
+  table.insert(expect_data, "\r\n<!--\r\ncomment\r\n--><!--\r\ncomment2\r\n-->\r\n")
+
+  local client = Client:new()
+  for i = 1, #test_data do
+    result = client:html_remove_double_hyphen(test_data[i])
+--    result = client:html_remove_double_hyphen(test_data[1])
+    --assert(expect_data[i] == result)
+  end
+end
+
+--test_html_remove_office_p_tag()
+--test_remove_hyphen_from_single_line()
+--test_remove_hyphen_in_multi_line()
+test_html_remove_double_hyphen()
