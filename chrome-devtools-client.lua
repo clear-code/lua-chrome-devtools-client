@@ -119,6 +119,13 @@ function Client.html_remove_double_hyphen(self, html)
   local position = 1
   local comment_start_point = nil
   local nest_level = 0
+  local content = nil
+  local match_data = ""
+  local comment_start_start_position = 0
+  local comment_start_end_position = 0
+  local comment_start_position = 0
+  local comment_end_start_position = 0
+  local comment_end_end_position = 0
 
   local function strip_hyphen(text)
     text = rex.gsub(text, "(?:\\A-+|-+\\z)", "")
@@ -175,14 +182,6 @@ function Client.html_remove_double_hyphen(self, html)
     print("result", sanitized_xml)
   end
 
-  html = "<!---->"
-  html = "<!----->"
-  html = "<!------>"
-  html = "<!-- -- -->"
-  html = "<!-- <!-- --> -->"
-  html = "abc<!-- <!-- --> -->b<!-- -- -->c"
-  html = [[abc<!-- --cdf
-  -->]]
   remove_double_hyphen(html)
 end
 
