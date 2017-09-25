@@ -202,23 +202,10 @@ function Client.remove_hyphen_in_multi_line(self, line, offset)
 end
 
 function Client.html_remove_double_hyphen(self, html)
-  local test_index = 1
-  local nest_count = 0
-  local split_start_point = 0
-  local split_end_point = 0
-  local start_comment_start_point = 0
-  local start_comment_end_point = 0
-  local end_comment_start_point = 0
-  local end_comment_end_point = 0
-
---  local html_lines = self.split_lines(html)
   local sanitized_xml = ""
-  local position = 0
+  local position = 1
   local comment_start_point = nil
   local nest_level = 0
---  print("rex", rex.match(html, "<!--|-->"))
-  --regex = string.regexp("hello", "i")
-  --print("regex", regex)
 
   local function strip_hyphen(text)
     text = rex.gsub(text, "(?:\\A-+|-+\\z)", "")
@@ -226,86 +213,75 @@ function Client.html_remove_double_hyphen(self, html)
   end
 
   local function shorten_double_hyphen(text)
+    --print("3,", text)
     if text == nil then
       return text
     end
-    text = rex.gsub(text, "/--+/", "-")
+    text = rex.gsub(text, "--+", "-")
     return text
   end
 
   local function sanitize_comment(comment)
+    --print("comment", comment)
     content = rex.gsub(comment, "\\A<!--|-->\\z", "")
+    --print("content1", content)
     content = strip_hyphen(content)
-    content = shorten_double_hyphen(contetn)
+    --print("content2", content)
+    content = shorten_double_hyphen(content)
+    --print("content3", content)
     if content == nil then
+      --print("hoge")
       return "<!---->"
     else
       return "<!--"..content.."-->"
     end
   end
 
-  local function test_remove(index, html_lines)
-    --print(html_lines)
+  local function remove_double_hyphen(html_lines)
     match_data = rex.match(html_lines, "<!--|-->", position)
-    --print("match", match_data)
     while match_data do
       if match_data == "<!--" then
+        comment_start_start_position, comment_start_end_position = rex.find(html_lines, "<!--", position)
+	--print("s, e", comment_start_start_position, comment_start_end_position)
         if nest_level == 0 then
-          comment_start_positioni, comment_end_position = rex.find(html_lines, "<!--")
-          --print(comment_start_position)
-          sanitized_xml = sanitized_xml .. "<!--"--rex.sub(position, comment_start_point)
-          print("sani", sanitized_xml)
+	  --print("find", html_lines, rex.find(html_lines, "<!--"))
+	  if position == comment_start_start_position then
+	    sanitized_xml = ""
+	  else
+            sanitized_xml = sanitized_xml..html_lines:sub(position, comment_start_start_position - 1)
+            --print("sani", html_lines, position, comment_start_start_position, sanitized_xml)
+          end
+          comment_start_position = comment_start_start_position
         end
+	position = comment_start_end_position + 1
         nest_level = nest_level + 1
       else
         nest_level = nest_level - 1
+        comment_end_start_position, comment_end_end_position = rex.find(html_lines, "-->", position)
         if nest_level == 0 then
-          comment_end_start, comment_end_end = rex.find(html_lines, "-->")
-          comment = html_lines:sub(comment_start_position, comment_end_start)
-          print("comment", comment)
+          comment = html_lines:sub(comment_start_position, comment_end_end_position)
           sanitized_xml = sanitized_xml..sanitize_comment(comment)
-          comment_start_position = nil
+	  --print("sanisani", sanitized_xml)
+          comment_start_start_position = nil
         end
+	position = comment_end_end_position + 1
       end
-      print("find", rex.find(html_lines, "<!--|-->", comment_end_position))
-      start_position, comment_end_position = rex.find(html_lines, "<!--|-->", comment_end_position)
-      match_data = rex.match(html_lines, "<!--|-->", comment_end_position)
+      --print(position)
+      match_data = rex.match(html_lines, "<!--|-->", position)
     end
-    print("result", sanitizaed_xml)
+    sanitized_xml = sanitized_xml..html_lines:sub(position, -1)
+    print("result", sanitized_xml)
   end
-  --  print("html", html_lines)
---    print("before", index, html_lines, nest_count)
---    print("end_comment_find?", html_lines:find("<!%-%-", index))
---[[
-    html_lines = "<!--test-->test-->"
-    print(rex.match(html_lines, "<!--|-->"))
-    if (rex.match(html_lines, "<!--|-->")) then
-      if html_lines:find("<!%-%-", index) then
-        start_comment_start_point, start_comment_end_point = html_lines:find("<!%-%-", index)
-        if nest_count == 0 then
-          split_start_point = start_comment_end_point+1
-        end
-        nest_count = nest_count + 1
-        test_remove(start_comment_end_point+1, html_lines)
-      else
-        if nest_count ~= 0 then
-          nest_count = nest_count - 1
-          end_comment_start_point, end_comment_end_point = html_lines:find("%-%->", index)
-          if nest_count == 0 then
-            splited_str = html_lines:sub(split_start_point, end_comment_start_point-1)
-            print("result", splited_str)
-          else
-            test_remove(end_comment_end_point+1, html_lines)
-          end
-        end
-      end
-      test_index = index
-    end
-  end
---]]
---  for i=1, #html_lines, 1 do
 --    print("index", test_index)
-    test_remove(test_index, html)
+  html = "<!---->"
+  html = "<!----->"
+  html = "<!------>"
+  html = "<!-- -- -->"
+  html = "<!-- <!-- --> -->"
+  html = "abc<!-- <!-- --> -->b<!-- -- -->c"
+  html = [[abc<!-- --cdf
+  -->]]
+  remove_double_hyphen(html)
 --  end
 end
 --  local html_lines = self.split_lines(html)
