@@ -6,6 +6,7 @@ local json = require("cjson")
 local websocket = require("http.websocket")
 local url = require("socket.url")
 local basexx = require("basexx")
+local rex = require("rex_onig")
 
 -- Client Class
 Client = {}
@@ -209,17 +210,76 @@ function Client.html_remove_double_hyphen(self, html)
   local start_comment_end_point = 0
   local end_comment_start_point = 0
   local end_comment_end_point = 0
-  print("html", html)
-  local html_lines = self.split_lines(html)
-  regex = string.regexp("hello", "i")
-  print("regex", regex)
---  html = "<!-- test<!-- hoge -->post-->"
+
+--  local html_lines = self.split_lines(html)
+  local sanitized_xml = ""
+  local position = 0
+  local comment_start_point = nil
+  local nest_level = 0
+--  print("rex", rex.match(html, "<!--|-->"))
+  --regex = string.regexp("hello", "i")
+  --print("regex", regex)
+
+  local function strip_hyphen(text)
+    text = rex.gsub(text, "(?:\\A-+|-+\\z)", "")
+    return text
+  end
+
+  local function shorten_double_hyphen(text)
+    if text == nil then
+      return text
+    end
+    text = rex.gsub(text, "/--+/", "-")
+    return text
+  end
+
+  local function sanitize_comment(comment)
+    content = rex.gsub(comment, "\\A<!--|-->\\z", "")
+    content = strip_hyphen(content)
+    content = shorten_double_hyphen(contetn)
+    if content == nil then
+      return "<!---->"
+    else
+      return "<!--"..content.."-->"
+    end
+  end
 
   local function test_remove(index, html_lines)
+    --print(html_lines)
+    match_data = rex.match(html_lines, "<!--|-->", position)
+    --print("match", match_data)
+    while match_data do
+      if match_data == "<!--" then
+        if nest_level == 0 then
+          comment_start_positioni, comment_end_position = rex.find(html_lines, "<!--")
+          --print(comment_start_position)
+          sanitized_xml = sanitized_xml .. "<!--"--rex.sub(position, comment_start_point)
+          print("sani", sanitized_xml)
+        end
+        nest_level = nest_level + 1
+      else
+        nest_level = nest_level - 1
+        if nest_level == 0 then
+          comment_end_start, comment_end_end = rex.find(html_lines, "-->")
+          comment = html_lines:sub(comment_start_position, comment_end_start)
+          print("comment", comment)
+          sanitized_xml = sanitized_xml..sanitize_comment(comment)
+          comment_start_position = nil
+        end
+      end
+      print("find", rex.find(html_lines, "<!--|-->", comment_end_position))
+      start_position, comment_end_position = rex.find(html_lines, "<!--|-->", comment_end_position)
+      match_data = rex.match(html_lines, "<!--|-->", comment_end_position)
+    end
+    print("result", sanitizaed_xml)
+  end
   --  print("html", html_lines)
-    print("before", index, html_lines, nest_count)
+--    print("before", index, html_lines, nest_count)
 --    print("end_comment_find?", html_lines:find("<!%-%-", index))
-    if (html_lines:find("<!%-%-", index) or html_lines:find("%-%->", index)) then
+--[[
+    html_lines = "<!--test-->test-->"
+    print(rex.match(html_lines, "<!--|-->"))
+    if (rex.match(html_lines, "<!--|-->")) then
       if html_lines:find("<!%-%-", index) then
         start_comment_start_point, start_comment_end_point = html_lines:find("<!%-%-", index)
         if nest_count == 0 then
@@ -228,7 +288,6 @@ function Client.html_remove_double_hyphen(self, html)
         nest_count = nest_count + 1
         test_remove(start_comment_end_point+1, html_lines)
       else
-        print("test")
         if nest_count ~= 0 then
           nest_count = nest_count - 1
           end_comment_start_point, end_comment_end_point = html_lines:find("%-%->", index)
@@ -242,17 +301,13 @@ function Client.html_remove_double_hyphen(self, html)
       end
       test_index = index
     end
---    if nest_count == 0 and split_start_point ~=0 then
---      end_comment_start_point, end_comment_end_point = html_lines:find("%-%->", index)
---      splited_str = html_lines:sub(split_start_point, end_comment_start_point-1)
---      print("result", splited_str)
---    end
   end
-
-  for i=1, #html_lines, 1 do
-    print("index", test_index)
+--]]
+--  for i=1, #html_lines, 1 do
+--    print("index", test_index)
     test_remove(test_index, html)
-  end
+--  end
+end
 --  local html_lines = self.split_lines(html)
 --  for i=1, #html_lines, 1 do
 --    start_comment_start_point, start_comment_end_point = html:find("<!%-%-")
@@ -328,8 +383,8 @@ function Client.html_remove_double_hyphen(self, html)
     value = value.."\r\n"..v
   end
   return value
---]]
 end
+--]]
 
 function Client.html_remove_office_p_tag(self, html)
   pre = string.gsub(html, "<o:p", "<p")
