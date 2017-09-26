@@ -6,6 +6,7 @@ local json = require("cjson")
 local websocket = require("http.websocket")
 local url = require("socket.url")
 local basexx = require("basexx")
+local rex = require("rex_onig")
 
 -- Client Class
 Client = {}
@@ -113,162 +114,75 @@ function Client.close(self)
   assert(self.connection:close())
 end
 
-function Client.split_lines(data)
-  local result = {}
-
-  if data:match("\r\n$") then
-    data = data.."\r\n"
-  else
-    data = data.."\n"
-  end
-
-  local function splitter(line)
-    table.insert(result, line)
-    return ""
-  end
-  data:gsub("(.-)\r?\n", splitter)
-  return result
-end
-
-function Client.find_pattern_line_index(pattern, index, lines)
-  while (index <= #lines) do
-    local start_index, end_index = string.find(lines[index], pattern, 1, true)
-    if start_index then
-      if pattern == "<!--" then
-        if not string.find(lines[index], "<!--[", start_index, true) then
-          return index
-        end
-      else
-        return index
-      end
-    end
-    index = index + 1
-  end
-  return nil
-end
-
---[[
-  This function only use single line comment.
---]]
-function Client.remove_hyphen_from_single_line(self, line)
-  local left_bracket_start, left_bracket_end = string.find(line, "<!--", 1, true)
-  local right_bracket_start, right_bracket_end = string.find(line, "-->", left_bracket_end + 1, true)
-  local pre, middle, post
-
-  if left_bracket_start and right_bracket_start then
-    pre = string.sub(line, 1, left_bracket_end)
-    middle = string.sub(line, left_bracket_end + 1, right_bracket_start - 1)
-    post = string.sub(line, right_bracket_start)
-    return pre..string.gsub(middle, "-", "")..post -- Remove hyphen in comment
-  else
-    return line
-  end
-end
-
---[[
-  This function only use with multi line comment.
-]]--
-function Client.remove_hyphen_in_multi_line(self, line, offset)
-  local result
-  local left_bracket_start, left_bracket_end = string.find(line, "<!--", offset, true)
-  local right_bracket_start, right_bracket_end = string.find(line, "-->", offset, true)
-  local pre, post
-
-  if left_bracket_start and right_bracket_start then
-    if right_bracket_end < left_bracket_start then
-      -- -->body<!--
-      pre = string.sub(line, 1, right_bracket_start - 1)
-      middle = string.sub(line, right_bracket_start, left_bracket_end)
-      post = string.sub(line, left_bracket_end + 1)
-      result = string.gsub(pre, "-", "")..middle..string.gsub(post, "-", "")
-    else
-      pre = string.sub(line, 1, left_bracket_end)
-      middle = string.sub(line, left_bracket_end + 1, right_bracket_start - 1)
-      post = string.sub(line, right_bracket_start)
-      result = pre..string.gsub(middle, "-", "")..post
-    end
-  elseif left_bracket_start then
-    pre = string.sub(line, 1, left_bracket_end)
-    post = string.sub(line, left_bracket_end + 1)
-    result = pre..string.gsub(post, "-", "") -- Remove hyphen in comment
-  elseif right_bracket_start then
-    pre = string.sub(line, 1, right_bracket_start - 1)
-    post = string.sub(line, right_bracket_start)
-    result = string.gsub(pre, "-", "")..post -- Remove hyphen in comment
-  end
-
-  return result
-end
-
 function Client.html_remove_double_hyphen(self, html)
-  local lines = self.split_lines(html)
-  local result = {}
-  local index = 1
-  local pre, middle, post
-  local extracted
-  local start_index, end_index
-  local value
+  local sanitized_xml = ""
+  local position = 1
+  local comment_start_point = nil
+  local nest_level = 0
+  local content = nil
+  local match_data = ""
+  local comment_start_start_position = 0
+  local comment_start_end_position = 0
+  local comment_start_position = 0
+  local comment_end_start_position = 0
+  local comment_end_end_position = 0
 
-  while (index <= #lines) do
-    start_index = self.find_pattern_line_index("<!--", index, lines)
-    end_index = self.find_pattern_line_index("-->", index, lines)
-    if start_index and end_index then
-      if index < start_index and start_index <= end_index then
-        for i = index, start_index - 1 do
-          table.insert(result, lines[i])
-        end
-      end
-      if start_index == end_index then
-        -- single line
-        extracted = self:remove_hyphen_from_single_line(lines[start_index])
-        table.insert(result, extracted)
-        index = start_index + 1
-      elseif start_index < end_index then
-        -- multi line
-        pre = self:remove_hyphen_in_multi_line(lines[start_index])
-        table.insert(result, pre)
-        for i = start_index + 1, end_index - 1 do
-          middle = string.gsub(lines[i], "-", "")
-          table.insert(result, middle)
-        end
-        post = self:remove_hyphen_in_multi_line(lines[end_index])
-        index = end_index
-        left_bracket_start = string.find(lines[end_index], "<!--", 1, true)
-        if left_bracket_start then
-          table.insert(result, post)
-          end_index = self.find_pattern_line_index("-->", index + 1, lines)
-          for i = index + 1, end_index - 1 do
-            middle = string.gsub(lines[i], "-", "")
-            table.insert(result, middle)
-          end
-          post = self:remove_hyphen_in_multi_line(lines[end_index])
-          table.insert(result, post)
-        else
-           table.insert(result, post)
-        end
-        index = end_index + 1
-      else
-        -- not match
-        if index < start_index then
-          for i = index, start_index - 1 do
-            table.insert(result, lines[i])
-          end
-        end
-        index = start_index
-      end
+  local function strip_hyphen(text)
+    text = rex.gsub(text, "(?:\\A-+|-+\\z)", "")
+    return text
+  end
+
+  local function shorten_double_hyphen(text)
+    if text == nil then
+      return text
+    end
+    text = rex.gsub(text, "--+", "-")
+    return text
+  end
+
+  local function sanitize_comment(comment)
+    content = rex.gsub(comment, "\\A<!--|-->\\z", "")
+    content = strip_hyphen(content)
+    content = shorten_double_hyphen(content)
+    if content == nil then
+      return "<!---->"
     else
-      for i = index, #lines do
-        table.insert(result, lines[i])
-      end
-      index = #lines + 1
+      return "<!--"..content.."-->"
     end
   end
 
-  value = ""
-  for i,v in pairs(result) do
-    value = value.."\r\n"..v
+  local function remove_double_hyphen(html_lines)
+    match_data = rex.match(html_lines, "<!--|-->", position)
+    while match_data do
+      if match_data == "<!--" then
+        comment_start_start_position, comment_start_end_position = rex.find(html_lines, "<!--", position)
+        if nest_level == 0 then
+	  if position == comment_start_start_position then
+	    sanitized_xml = ""
+	  else
+            sanitized_xml = sanitized_xml..html_lines:sub(position, comment_start_start_position - 1)
+          end
+          comment_start_position = comment_start_start_position
+        end
+	position = comment_start_end_position + 1
+        nest_level = nest_level + 1
+      else
+        nest_level = nest_level - 1
+        comment_end_start_position, comment_end_end_position = rex.find(html_lines, "-->", position)
+        if nest_level == 0 then
+          comment = html_lines:sub(comment_start_position, comment_end_end_position)
+          sanitized_xml = sanitized_xml..sanitize_comment(comment)
+          comment_start_start_position = nil
+        end
+	position = comment_end_end_position + 1
+      end
+      match_data = rex.match(html_lines, "<!--|-->", position)
+    end
+    sanitized_xml = sanitized_xml..html_lines:sub(position, -1)
+    return sanitized_xml
   end
-  return value
+
+  return remove_double_hyphen(html)
 end
 
 function Client.html_remove_office_p_tag(self, html)
