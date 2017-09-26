@@ -12,6 +12,7 @@ Dependencies
 - lua-cjson
 - http
 - luasocket
+- lrexlib-oniguruma
 
 Usage
 -----
