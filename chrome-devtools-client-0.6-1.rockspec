@@ -1,5 +1,5 @@
 package = "chrome-devtools-client"
-version = "0.5-1"
+version = "0.6-1"
 source = {
    url = "git://github.com/clear-code/lua-chrome-devtools-client"
 }
@@ -12,7 +12,8 @@ dependencies = {
   "lua >= 5.1",
   "lua-cjson",
   "http",
-  "luasocket"
+  "luasocket",
+  "lrexlib-oniguruma"
 }
 build = {
    type = "builtin",
