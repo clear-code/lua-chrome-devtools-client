@@ -179,9 +179,10 @@ function Client.html_remove_double_hyphen(self, html)
       match_data = rex.match(html_lines, "<!--|-->", position)
     end
     sanitized_xml = sanitized_xml..html_lines:sub(position, -1)
+    return sanitized_xml
   end
 
-  remove_double_hyphen(html)
+  return remove_double_hyphen(html)
 end
 
 function Client.html_remove_office_p_tag(self, html)
