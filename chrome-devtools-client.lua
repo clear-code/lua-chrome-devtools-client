@@ -91,6 +91,16 @@ function Client.page_navigate(self, page_url)
   socket.sleep(1)
 end
 
+function Client.capture_screenshot(self, opt)
+  local command = {
+    id = 0,
+    method = "Page.captureScreenshot",
+    params = opt
+  }
+  local response = self.send_command(self.connection, command)
+  return response.result.data
+end
+
 function Client.send_command(ws, command)
   local command_id = command.id
 
