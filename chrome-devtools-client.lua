@@ -191,6 +191,12 @@ function Client.html_remove_office_p_tag(self, html)
   return string.gsub(post, "\r?\n", "")
 end
 
+function Client.html_remove_invalid_attribute_name(self, html)
+  html = rex.gsub(html, "\\s[0-9]+?[^0-9]*?\"=\"\"\\s", " ")
+  html = rex.gsub(html, "img\nsrc|img\r\nsrc|imgsrc", "img src")
+  return html
+end
+
 function Client.new(self)
   local object = {}
   setmetatable(object, object)

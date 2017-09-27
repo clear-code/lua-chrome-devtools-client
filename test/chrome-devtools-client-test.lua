@@ -22,71 +22,55 @@ function test_html_remove_office_p_tag()
   end
 end
 
-function test_remove_hyphen_from_single_line()
-  test_data = {}
-  expect_data = {}
-
-  table.insert(test_data, "pre<!---comment--->post")
-
-  table.insert(expect_data, "pre<!--comment-->post")
-
-  local client = Client:new()
-  for i = 1, #test_data do
-     result = client:remove_hyphen_from_single_line(test_data[i])
-     assert(expect_data[i] == result)
-  end
-end
-
-function test_remove_hyphen_in_multi_line()
-  test_data = {}
-  expect_data = {}
-  offset_data = {}
-
-  table.insert(test_data, "pre-<!---comment\r\n-post")
-  table.insert(test_data, "comment--->\r\n-post-")
-  table.insert(test_data, "<!---keep---><!---\r\ncomment")
-  table.insert(test_data, "-comment--->\r\n---keep--->")
-  table.insert(test_data, "-comment--->\r\n---comment2--->")
-
-  table.insert(expect_data, "pre-<!--comment\r\npost")
-  table.insert(expect_data, "comment-->\r\n-post-")
-  table.insert(expect_data, "<!---keep---><!--\r\ncomment")
-  table.insert(expect_data, "comment-->\r\n---keep--->")
-  table.insert(expect_data, "comment>\r\ncomment2-->")
-
-  table.insert(offset_data, 1)
-  table.insert(offset_data, 1)
-  table.insert(offset_data, 12)
-  table.insert(offset_data, 1)
-  table.insert(offset_data, 11)
-
-  local client = Client:new()
-  for i = 1, #test_data do
-    result = client:remove_hyphen_in_multi_line(test_data[i], offset_data[i])
-    assert(expect_data[i] == result)
-  end
-end
-
 function test_html_remove_double_hyphen()
   test_data = {}
   expect_data = {}
 
-  table.insert(test_data, "<!----->\r\n")
-  table.insert(test_data, "<!--\r\n-comment-\r\n-->\r\n")
-  table.insert(test_data, "<!--\r\ncomment\r\n--><!---\r\ncomment2\r\n--->\r\n")
+  table.insert(test_data, "<!---->")
+  table.insert(test_data, "<!----->")
+  table.insert(test_data, "<!------>")
+  table.insert(test_data, "<!-- -- -->")
+  table.insert(test_data, "<!-- <!-- --> -->")
+  table.insert(test_data, "abc<!-- <!-- --> -->b<!-- -- -->c")
 
-  table.insert(expect_data, "\r\n<!---->\r\n")
-  table.insert(expect_data, "\r\n<!--\r\ncomment\r\n-->\r\n")
-  table.insert(expect_data, "\r\n<!--\r\ncomment\r\n--><!--\r\ncomment2\r\n-->\r\n")
+
+  table.insert(expect_data, "<!---->")
+  table.insert(expect_data, "<!---->")
+  table.insert(expect_data, "<!---->")
+  table.insert(expect_data, "<!-- - -->")
+  table.insert(expect_data, "<!-- <!- -> -->")
+  table.insert(expect_data, "abc<!-- <!- -> -->b<!-- - -->c")
 
   local client = Client:new()
   for i = 1, #test_data do
     result = client:html_remove_double_hyphen(test_data[i])
-    assert(expect_data[i] == result)
+    assert(expect_data[i] == result, "\nresult="..result.."\nexpect="..expect_data[i])
+  end
+end
+
+function test_html_remove_invalid_attribute_name()
+  test_data = {}
+  expect_data = {}
+
+  table.insert(test_data, "<meta data=\"hoge\"> 0\"=\"\" <img src=\"/tmp/hoge/test.html\"/>")
+  table.insert(test_data, "<meta data=\"hoge\"> 0123ABC\"=\"\" <img src=\"/tmp/hoge/test.html\"/>")
+  table.insert(test_data, "<meta data=\"hoge\"> 0123ABC\"=\"\" <img\nsrc=\"/tmp/hoge/test.html\"/>")
+  table.insert(test_data, "<meta data=\"hoge\"> 0123ABC\"=\"\" <img\r\nsrc=\"/tmp/hoge/test.html\"/>")
+  table.insert(test_data, "<meta data=\"hoge\"> 0123ABC\"=\"\" <imgsrc=\"/tmp/hoge/test.html\"/>")
+
+  table.insert(expect_data, "<meta data=\"hoge\"> <img src=\"/tmp/hoge/test.html\"/>")
+  table.insert(expect_data, "<meta data=\"hoge\"> <img src=\"/tmp/hoge/test.html\"/>")
+  table.insert(expect_data, "<meta data=\"hoge\"> <img src=\"/tmp/hoge/test.html\"/>")
+  table.insert(expect_data, "<meta data=\"hoge\"> <img src=\"/tmp/hoge/test.html\"/>")
+  table.insert(expect_data, "<meta data=\"hoge\"> <img src=\"/tmp/hoge/test.html\"/>")
+
+  local client = Client:new()
+  for i = 1, #test_data do
+    result = client:html_remove_invalid_attribute_name(test_data[i])
+    assert(expect_data[i] == result, "\nresult="..result.."\nexpect="..expect_data[i])
   end
 end
 
 test_html_remove_office_p_tag()
-test_remove_hyphen_from_single_line()
-test_remove_hyphen_in_multi_line()
 test_html_remove_double_hyphen()
+test_html_remove_invalid_attribute_name()
