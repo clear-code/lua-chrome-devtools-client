@@ -56,6 +56,9 @@ end
 function Client.convert_html_to_xml(self, html)
   html = self:html_remove_double_hyphen(html)
   html = self:html_remove_office_p_tag(html)
+  html = self:html_remove_invalid_character(html)
+  html = self:html_remove_invalid_attribute_name(html)
+  html = self:html_remove_nest_double_quotation(html)
 
   self:page_navigate("data:text/html;charset=UTF-8;base64,"..basexx.to_base64(html))
 
@@ -194,6 +197,16 @@ end
 function Client.html_remove_invalid_attribute_name(self, html)
   html = rex.gsub(html, "\\s[0-9]+?[^0-9]*?\"=\"\"\\s", " ")
   html = rex.gsub(html, "img\nsrc|img\r\nsrc|imgsrc", "img src")
+  return html
+end
+
+function Client.html_remove_invalid_character(self, html)
+  html = rex.gsub(html, "\x01", "")
+  return html
+end
+
+function Client.html_remove_nest_double_quotation(self, html)
+  html = rex.gsub(html, "\"Sunrise.*?\"", "")
   return html
 end
 
