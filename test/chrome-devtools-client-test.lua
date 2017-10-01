@@ -71,6 +71,20 @@ function test_html_remove_invalid_attribute_name()
   end
 end
 
+function test_capture_screenshot()
+  local connect_ip = "localhost"
+  local connect_port = "9222"
+
+  local client = Client:new()
+  client:connect(connect_ip, connect_port)
+
+  client:page_navigate("https://www.google.co.jp/")
+
+  local capture_img = client:capture_screenshot()
+  assert(capture_img, "\nscreenshot is failes:result="..capture_img)
+end
+
 test_html_remove_office_p_tag()
 test_html_remove_double_hyphen()
 test_html_remove_invalid_attribute_name()
+test_capture_screenshot()
