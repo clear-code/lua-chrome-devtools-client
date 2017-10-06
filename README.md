@@ -22,6 +22,8 @@ API List:
 - `close`
 - `page_navigate`
 - `convert_html_to_xml`
+- `capture_screenshot`
+- `get_version`
 
 ### `connect`
 
@@ -76,6 +78,34 @@ HTML data is below.
 
 ```lua
 local html_data = "<!DOCTYPE html><meta charset=utf-8><title>Hello World</title>"
+```
+
+### `capture_screenshot`
+
+Return value of this function is base64 encoded data.
+
+#### Examples
+
+```lua
+local connect_ip = "localhost"
+local connect_port = "9222"
+
+local client = Client:new()
+client:connect(connect_ip, connect_port)
+client:page_navigate("https://www.google.co.jp/")
+
+local capture_img = client:capture_screenshot()
+```
+
+### `get_version`
+
+Retrun value of this function is string data.
+
+#### Examples
+
+```lua
+local client = Client:new()
+print(client.get_version())
 ```
 
 License(MIT)

@@ -220,6 +220,10 @@ function Client.html_remove_nest_double_quotation(self, html)
   return html
 end
 
+function Client.get_version()
+  return "0.8-1"
+end
+
 function Client.new(self)
   local object = {}
   setmetatable(object, object)
