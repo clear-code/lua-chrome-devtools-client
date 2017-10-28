@@ -81,10 +81,27 @@ function test_capture_screenshot()
   client:page_navigate("https://www.google.co.jp/")
 
   local capture_img = client:capture_screenshot()
+  client:close()
   assert(capture_img, "\nscreenshot is failes:result="..capture_img)
+end
+
+function test_print_to_pdf()
+  local connect_ip = "localhost"
+  local connect_port = "9222"
+
+  local client = Client:new()
+  client:connect(connect_ip, connect_port)
+
+  client:page_navigate("https://www.google.co.jp/")
+
+  local pdf = client:capture_screenshot()
+  print(pdf)
+  client:close()
+--  assert(capture_img, "\nscreenshot is failes:result="..capture_img)
 end
 
 test_html_remove_office_p_tag()
 test_html_remove_double_hyphen()
 test_html_remove_invalid_attribute_name()
 test_capture_screenshot()
+test_print_to_pdf()

@@ -104,6 +104,17 @@ function Client.capture_screenshot(self, opt)
   return response.result.data
 end
 
+function Client.print_to_pdf(self, opt)
+  local command = {
+    id = 0,
+    method = "Page.printToPDF",
+    params = opt
+  }
+  local response = self.send_command(self.connection, command)
+  print(response)
+  return response.result.data
+end
+
 function Client.send_command(ws, command)
   local command_id = command.id
 
